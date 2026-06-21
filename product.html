@@ -1,0 +1,85 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Product — Decork</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500&family=Hanken+Grotesk:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/styles.css"></head><body>
+<div id="header"></div>
+<div class="wrap"><div class="pdp" id="pdp"></div></div>
+<div id="footer"></div>
+<script src="assets/js/cart.js"></script>
+<script src="assets/js/catalog.js"></script>
+<script src="assets/js/calculators.js"></script>
+<script src="assets/js/partials.js"></script>
+<script>
+(function(){
+  var id = new URLSearchParams(location.search).get('id');
+  var p = Catalog.find(id);
+  var box = document.getElementById('pdp');
+  if(!p){ box.innerHTML='<p>Product not found. <a href="tiles.html">Browse tiles</a></p>'; return; }
+  if(p.type==='tile') renderTile(p, box); else renderPaint(p, box);
+
+  function gallery(){ return '<div class="gallery">'+Catalog.thumb(p)+'</div>'; }
+  function addBtn(label){ return '<button class="btn btn--primary btn--block" id="add" style="margin-top:14px">'+label+'</button>'; }
+
+  function renderTile(p, box){
+    var pricePerBox = Math.round(p.pricePerSqm*p.sqmPerBox);
+    box.innerHTML = gallery()+'<div>'+
+      '<span class="tag">'+p.origin+'</span>'+
+      '<h1 class="serif" style="font-size:30px;margin:10px 0">'+p.name+'</h1>'+
+      '<div class="price">'+Cart.formatNaira(p.pricePerSqm)+' / m² <small>· '+Cart.formatNaira(pricePerBox)+' / box ('+p.sqmPerBox+'m², '+p.tilesPerBox+' tiles)</small></div>'+
+      '<div class="calc">'+
+        '<strong style="font-size:14px">Coverage calculator</strong><br>'+
+        '<label>Length <input id="L" type="number" value="4" step="0.1"> m</label>'+
+        '<label>Width <input id="W" type="number" value="3.5" step="0.1"> m</label><br>'+
+        '<span class="chip on" data-waste="0.10" id="straight">Straight +10%</span>'+
+        '<span class="chip" data-waste="0.15" id="diag">Diagonal +15%</span>'+
+        '<div class="calcout" id="out"></div>'+
+      '</div>'+ addBtn('Add to cart') +'</div>';
+    var waste=0.10;
+    function recalc(){
+      var r = DecorkCalc.tileCoverage({length:+L.value,width:+W.value,sqmPerBox:p.sqmPerBox,tilesPerBox:p.tilesPerBox,pricePerSqm:p.pricePerSqm,waste:waste});
+      out.innerHTML = 'Area '+r.area+' m² → <b>'+r.boxes+' boxes</b> ('+r.coveredSqm+' m², '+r.tiles+' tiles)<br><b>Total: '+Cart.formatNaira(r.cost)+'</b>';
+      box._calc = r;
+    }
+    L.oninput=recalc; W.oninput=recalc;
+    straight.onclick=function(){waste=0.10;straight.classList.add('on');diag.classList.remove('on');recalc();};
+    diag.onclick=function(){waste=0.15;diag.classList.add('on');straight.classList.remove('on');recalc();};
+    recalc();
+    document.getElementById('add').onclick=function(){
+      var r=box._calc;
+      Cart.add({id:p.id,name:p.name,kind:'tile',variant:'',unitLabel:'box',unitPrice:r.pricePerBox,qty:r.boxes,meta:r.coveredSqm+' m²'});
+      location.href='cart.html';
+    };
+  }
+
+  function renderPaint(p, box){
+    var colour=p.colours[0], finish=p.finishes[0], size=p.sizes[0];
+    box.innerHTML = gallery()+'<div>'+
+      '<span class="tag">'+p.category+'</span>'+
+      '<h1 class="serif" style="font-size:30px;margin:10px 0">'+p.name+'</h1>'+
+      '<div id="swatches">'+p.colours.map(function(c,i){return '<span class="swatch'+(i===0?' on':'')+'" data-i="'+i+'" style="background:'+c.hex+'"></span>';}).join('')+'</div>'+
+      '<div id="cname" class="price"></div>'+
+      '<div style="margin-top:10px">Finish: <span id="fins">'+p.finishes.map(function(f,i){return '<span class="chip'+(i===0?' on':'')+'" data-f="'+f+'">'+f+'</span>';}).join('')+'</span></div>'+
+      '<div style="margin-top:10px">Size: <span id="sizes">'+p.sizes.map(function(s,i){return '<span class="chip'+(i===0?' on':'')+'" data-s="'+i+'">'+s.litres+'L · '+Cart.formatNaira(s.price)+'</span>';}).join('')+'</span></div>'+
+      '<div class="calc"><strong style="font-size:14px">Paint calculator</strong><br>'+
+        '<label>Wall area <input id="A" type="number" value="36"> m²</label>'+
+        '<label>Coats <input id="C" type="number" value="2"></label>'+
+        '<div class="calcout" id="out"></div></div>'+
+      addBtn('Add to cart')+'</div>';
+    function sync(){
+      cname.innerHTML='<small>'+colour.name+' · '+colour.code+'</small>';
+      var r=DecorkCalc.paintLitres({area:+A.value,coats:+C.value,coveragePerL:p.coveragePerL,sizes:p.sizes});
+      out.innerHTML=r.litres+' L needed → <b>'+r.tins.map(function(t){return t.qty+'×'+t.litres+'L';}).join(' + ')+'</b> · '+Cart.formatNaira(r.cost);
+    }
+    document.querySelectorAll('#swatches .swatch').forEach(function(s){s.onclick=function(){document.querySelectorAll('#swatches .swatch').forEach(function(x){x.classList.remove('on');});s.classList.add('on');colour=p.colours[+s.dataset.i];sync();};});
+    document.querySelectorAll('#fins .chip').forEach(function(c){c.onclick=function(){document.querySelectorAll('#fins .chip').forEach(function(x){x.classList.remove('on');});c.classList.add('on');finish=c.dataset.f;};});
+    document.querySelectorAll('#sizes .chip').forEach(function(c){c.onclick=function(){document.querySelectorAll('#sizes .chip').forEach(function(x){x.classList.remove('on');});c.classList.add('on');size=p.sizes[+c.dataset.s];};});
+    A.oninput=sync; C.oninput=sync; sync();
+    document.getElementById('add').onclick=function(){
+      Cart.add({id:p.id,name:p.name,kind:'paint',variant:colour.code+'/'+finish+'/'+size.litres+'L',unitLabel:'tin',unitPrice:size.price,qty:1,meta:colour.name+' · '+finish+' · '+size.litres+'L'});
+      location.href='cart.html';
+    };
+  }
+})();
+</script>
+</body></html>

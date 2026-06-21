@@ -1,0 +1,45 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Checkout — Decork</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500&family=Hanken+Grotesk:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/styles.css"></head><body>
+<div id="header"></div>
+<div class="wrap" style="padding:40px 0"><div class="center"><div class="eyebrow">Checkout</div><h1 class="serif" style="font-size:34px;margin-top:8px">Almost there</h1></div>
+<div class="grid" style="grid-template-columns:1fr 320px;gap:32px;margin-top:24px">
+  <form id="form">
+    <label class="field"><span>Full name</span><input name="name" required></label>
+    <label class="field"><span>Phone</span><input name="phone" required></label>
+    <label class="field"><span>Delivery address</span><input name="address" required></label>
+    <label class="field"><span>State</span>
+      <select name="state"><option>Abia</option><option>Enugu</option><option>FCT (Abuja)</option><option>Lagos</option><option>Other</option></select></label>
+    <label class="field"><span>Delivery method</span>
+      <select name="delivery"><option>Decork Logistics — to your door</option><option>Pickup at depot</option></select></label>
+    <label class="field"><span>Payment</span>
+      <select name="payment"><option>Card</option><option>Bank Transfer</option><option>Pay on Delivery</option></select></label>
+    <button class="btn btn--primary btn--block" type="submit" style="margin-top:8px">Place order (demo)</button>
+    <p style="font-size:12px;color:var(--muted)">This is a demo — no real payment is taken.</p>
+  </form>
+  <aside class="summary" id="summary"></aside>
+</div></div>
+<div id="footer"></div>
+<script src="assets/js/cart.js"></script>
+<script src="assets/js/checkout.js"></script>
+<script src="assets/js/partials.js"></script>
+<script>
+(function(){
+  var items=Cart.read();
+  if(!items.length){ location.href='cart.html'; return; }
+  var sub=Cart.subtotal(items), del=Cart.deliveryFee(sub);
+  document.getElementById('summary').innerHTML=
+    items.map(function(i){return '<div class="row"><span>'+i.name+' ×'+i.qty+'</span><span>'+Cart.formatNaira(Cart.lineTotal(i))+'</span></div>';}).join('')+
+    '<div class="row"><span>Delivery</span><span>'+(del===0?'Free':Cart.formatNaira(del))+'</span></div>'+
+    '<div class="row total"><span>Total</span><span>'+Cart.formatNaira(sub+del)+'</span></div>';
+  document.getElementById('form').addEventListener('submit',function(e){
+    e.preventDefault();
+    var d={}; new FormData(e.target).forEach(function(v,k){d[k]=v;});
+    Checkout.placeOrder(d);
+    location.href='confirmation.html';
+  });
+})();
+</script>
+</body></html>

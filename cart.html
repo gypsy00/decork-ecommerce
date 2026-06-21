@@ -1,0 +1,43 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Your Cart — Decork</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500&family=Hanken+Grotesk:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/styles.css"></head><body>
+<div id="header"></div>
+<div class="wrap" style="padding:40px 0"><div class="center"><div class="eyebrow">Your order</div><h1 class="serif" style="font-size:34px;margin-top:8px">Cart</h1></div>
+<div class="grid" style="grid-template-columns:1fr 320px;gap:32px;margin-top:24px" id="cartwrap">
+  <div id="lines"></div>
+  <aside class="summary" id="summary"></aside>
+</div></div>
+<div id="footer"></div>
+<script src="assets/js/cart.js"></script>
+<script src="assets/js/catalog.js"></script>
+<script src="assets/js/partials.js"></script>
+<script>
+(function(){
+  function key(i){ return i.id+'|'+(i.variant||''); }
+  function render(){
+    var items=Cart.read();
+    var lines=document.getElementById('lines');
+    if(!items.length){ document.getElementById('cartwrap').innerHTML='<p>Your cart is empty. <a href="tiles.html">Browse tiles</a> or <a href="paint.html">paint</a>.</p>'; return; }
+    lines.innerHTML=items.map(function(i){
+      return '<div class="line">'+
+        '<div class="ph"></div>'+
+        '<div><strong>'+i.name+'</strong><br><small>'+(i.meta||'')+(i.variant?(' · '+i.variant):'')+'</small><br>'+
+          '<input class="qty" type="number" min="1" value="'+i.qty+'" data-k="'+key(i)+'"> '+i.unitLabel+'(s) · '+Cart.formatNaira(i.unitPrice)+' each</div>'+
+        '<div style="text-align:right"><strong>'+Cart.formatNaira(Cart.lineTotal(i))+'</strong><br><a href="#" data-rm="'+key(i)+'" style="color:var(--red);font-size:12px">Remove</a></div>'+
+      '</div>';
+    }).join('');
+    var sub=Cart.subtotal(items), del=Cart.deliveryFee(sub);
+    document.getElementById('summary').innerHTML=
+      '<div class="row"><span>Subtotal</span><span>'+Cart.formatNaira(sub)+'</span></div>'+
+      '<div class="row"><span>Delivery</span><span>'+(del===0?'<b style="color:var(--green)">Free</b>':Cart.formatNaira(del))+'</span></div>'+
+      '<div class="row total"><span>Total</span><span>'+Cart.formatNaira(sub+del)+'</span></div>'+
+      '<a class="btn btn--primary btn--block" style="margin-top:16px" href="checkout.html">Checkout</a>';
+    lines.querySelectorAll('.qty').forEach(function(q){ q.onchange=function(){ Cart.setQty(q.dataset.k, parseInt(q.value,10)); render(); }; });
+    lines.querySelectorAll('[data-rm]').forEach(function(a){ a.onclick=function(e){ e.preventDefault(); Cart.remove(a.dataset.rm); render(); }; });
+  }
+  render();
+})();
+</script>
+</body></html>

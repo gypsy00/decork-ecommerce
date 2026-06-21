@@ -1,0 +1,24 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Order Confirmed — Decork</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500&family=Hanken+Grotesk:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/styles.css"></head><body>
+<div id="header"></div>
+<div class="wrap section center" id="conf"></div>
+<div id="footer"></div>
+<script src="assets/js/cart.js"></script>
+<script src="assets/js/partials.js"></script>
+<script>
+(function(){
+  var o; try{ o=JSON.parse(sessionStorage.getItem('decork_last_order')); }catch(e){}
+  var box=document.getElementById('conf');
+  if(!o){ box.innerHTML='<h1 class="serif">No recent order</h1><p><a href="tiles.html">Start shopping</a></p>'; return; }
+  box.innerHTML='<div class="eyebrow">Thank you</div>'+
+    '<h1 class="serif" style="font-size:40px;margin:10px 0">Order '+o.number+' confirmed</h1>'+
+    '<p>Thanks '+(o.details.name||'')+' — your order of '+Cart.formatNaira(o.total)+' is being prepared.<br>'+
+    'Delivery: '+o.details.delivery+' · Payment: '+o.details.payment+'</p>'+
+    '<p style="color:var(--muted);font-size:13px">(Demo order — no payment was taken.)</p>'+
+    '<a class="btn btn--primary" href="index.html" style="margin-top:14px">Back to home</a>';
+})();
+</script>
+</body></html>
